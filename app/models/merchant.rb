@@ -6,6 +6,8 @@ class Merchant < ApplicationRecord
   # has_many :invoice_items, through: :invoices
   # has_many :transactions, through: :invoices
 
+  validates :name, presence: true
+
   def self.sorted_by_creation
     Merchant.order("created_at DESC")
   end
