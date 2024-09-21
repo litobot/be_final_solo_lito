@@ -1,13 +1,21 @@
 require 'rails_helper'
 
 describe Merchant, type: :model do
+
+  ### Had to add coupon to every test because I've required coupon_id present in validation tests
+
+  # FactoryBot instances in order for tests to pass
+  let(:coupon) { create(:coupon) }
+  let(:merchant1) { create(:merchant) }
+  let(:customer) { create(:customer) }
+
   describe 'validations' do
     it { should validate_presence_of(:name)}
   end
 
   describe 'relationships' do
-    it { should have_many :items } # Add .dependent(:destroy) ?
-    it { should have_many :invoices } # Add .dependent(:destroy) ?
+    it { should have_many :items }
+    it { should have_many :invoices }
     it { should have_many(:customers).through(:invoices) }
   end
 
@@ -24,11 +32,13 @@ describe Merchant, type: :model do
       merchant1 = create(:merchant)
       merchant2 = create(:merchant)
       customer = create(:customer)
-      create(:invoice, status: "returned", merchant_id: merchant1.id, customer_id: customer.id)
-      create_list(:invoice, 5, merchant_id: merchant1.id, customer_id: customer.id)
-      create_list(:invoice, 5, merchant_id: merchant2.id, customer_id: customer.id)
-      create(:invoice, status: "packaged", merchant_id: merchant2.id, customer_id: customer.id)
-
+      
+      # Include coupon in every invoice creation
+      create(:invoice, status: "returned", merchant: merchant1, customer: customer, coupon: coupon)
+      create_list(:invoice, 5, merchant_id: merchant1.id, customer_id: customer.id, coupon: coupon)
+      create_list(:invoice, 5, merchant_id: merchant2.id, customer_id: customer.id, coupon: coupon)
+      create(:invoice, status: "packaged", merchant_id: merchant2.id, customer_id: customer.id, coupon: coupon)
+    
       expect(Merchant.filter_by_status("returned")).to eq([merchant1])
       expect(Merchant.filter_by_status("packaged")).to eq([merchant2])
       expect(Merchant.filter_by_status("shipped")).to match_array([merchant1, merchant2])
@@ -63,10 +73,9 @@ describe Merchant, type: :model do
 
       merchant2 = create(:merchant)
 
-      create_list(:invoice, 3, merchant_id: merchant1.id, customer_id: customer1.id)
-      create_list(:invoice, 2, merchant_id: merchant1.id, customer_id: customer2.id)
-
-      create_list(:invoice, 2, merchant_id: merchant2.id, customer_id: customer3.id)
+      create_list(:invoice, 3, merchant_id: merchant1.id, customer_id: customer1.id, coupon: coupon)
+      create_list(:invoice, 2, merchant_id: merchant1.id, customer_id: customer2.id, coupon: coupon)
+      create_list(:invoice, 2, merchant_id: merchant2.id, customer_id: customer3.id, coupon: coupon)
 
       expect(merchant1.distinct_customers).to match_array([customer1, customer2])
       expect(merchant2.distinct_customers).to eq([customer3])
@@ -76,11 +85,12 @@ describe Merchant, type: :model do
       merchant = create(:merchant)
       other_merchant = create(:merchant)
       customer = create(:customer)
-      inv_1_shipped = Invoice.create!(status: "shipped", merchant: merchant, customer: customer)
-      inv_2_shipped = Invoice.create!(status: "shipped", merchant: merchant, customer: customer)
-      inv_3_packaged = Invoice.create!(status: "packaged", merchant: merchant, customer: customer)
-      inv_4_packaged = Invoice.create!(status: "packaged", merchant: other_merchant, customer: customer)
-      inv_5_returned = Invoice.create!(status: "returned", merchant: merchant, customer: customer)
+
+      inv_1_shipped = Invoice.create!(status: "shipped", merchant: merchant, customer: customer, coupon: coupon)
+      inv_2_shipped = Invoice.create!(status: "shipped", merchant: merchant, customer: customer, coupon: coupon)
+      inv_3_packaged = Invoice.create!(status: "packaged", merchant: merchant, customer: customer, coupon: coupon)
+      inv_4_packaged = Invoice.create!(status: "packaged", merchant: other_merchant, customer: customer, coupon: coupon)
+      inv_5_returned = Invoice.create!(status: "returned", merchant: merchant, customer: customer, coupon: coupon)
 
       expect(merchant.invoices_filtered_by_status("shipped")).to match_array([inv_1_shipped, inv_2_shipped])
       expect(merchant.invoices_filtered_by_status("packaged")).to eq([inv_3_packaged])
