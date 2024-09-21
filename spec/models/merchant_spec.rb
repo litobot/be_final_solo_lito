@@ -6,8 +6,8 @@ describe Merchant, type: :model do
   end
 
   describe 'relationships' do
-    it { should have_many :items }
-    it { should have_many :invoices }
+    it { should have_many :items } # Add .dependent(:destroy) ?
+    it { should have_many :invoices } # Add .dependent(:destroy) ?
     it { should have_many(:customers).through(:invoices) }
   end
 
